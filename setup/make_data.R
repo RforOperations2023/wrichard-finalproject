@@ -31,7 +31,7 @@ request <- build_url(url)
 countries_sf <- st_read(request)
 
 ## save object ----
-saveRDS(countries_sf, 'src/data/countries_sf')
+saveRDS(countries_sf, 'src/data/countries_sf.Rds')
 
 # ratings data ----
 # same as before but this time not excluding 0 or blank elo
