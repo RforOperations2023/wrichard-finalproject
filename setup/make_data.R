@@ -57,14 +57,12 @@ colnames(ratings) <- columns
 ratings <- ratings[,c(1:6,9,12,15,18)]
 
 # country codes
-# todo(bristow) fix some of the `Fed` column to match iso3c
+fed_crosswalk <- read_csv('setup/fed_crosswalk.csv')
 
 # clean
+# ratings <- 
 ratings <- ratings |>
-  # filter(
-  #   SRtng > 0, # must have rating and rating must be above 0
-  #   Byear > 1900 # must have valid birth year
-  # ) |>
+  inner_join(fed_crosswalk, by = 'Fed') |> 
   mutate(
     Bdecade = factor(sapply(Byear, function(x) x - x %% 10)),
     Age = 2023 - Byear
@@ -74,6 +72,7 @@ ratings <- ratings |>
 saveRDS(ratings, file = 'src/data/ratings.Rds')
 
 # make list of all distinct countries
+# todo(bristow) should this now be distinct iso3c codes?
 # I was struggling to make this in the server side but still pass it 
 # to the ui side, so I'm just saving an .Rds object. Also: it's nice 
 # to use base R for this sometimes. I always default to tidyverse 
