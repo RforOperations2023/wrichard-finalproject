@@ -3,6 +3,7 @@ library(sf)
 library(dplyr)
 library(readr)
 library(janitor)
+library(countrycode)
 
 # countries layer ----
 
@@ -65,12 +66,23 @@ ratings <- ratings[,c(1:6,9,12,15,18)]
 fed_crosswalk <- read_csv('setup/fed_crosswalk.csv')
 
 # clean
-# ratings <- 
 ratings <- ratings |>
   inner_join(fed_crosswalk, by = 'Fed') |> 
   mutate(
     Bdecade = factor(sapply(Byear, function(x) x - x %% 10)),
-    Age = 2023 - Byear
+    Age = 2023 - Byear,
+    iso2c = countrycode(
+      iso3c, 
+      origin = 'iso3c', 
+      destination = 'iso2c', 
+      custom_match =  c('FIDE' = 'FIDE')
+    ),
+    Country = countrycode(
+      iso3c,
+      origin = 'iso3c',
+      destination = 'country.name',
+      custom_match = c('FIDE' = 'FIDE')
+    )
   )
 
 # save data
@@ -86,5 +98,10 @@ ratings$Fed |>
   table() |> 
   names() |> 
   saveRDS(file = 'src/data/federations.Rds')
+
+ratings$Country |> 
+  table() |> 
+  names() |> 
+  saveRDS(file = 'src/data/countries.Rds')
 
 # note to self: 30921406 is my FIDE number, but they got my number wrong!
