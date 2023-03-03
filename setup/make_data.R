@@ -2,6 +2,7 @@ library(httr)
 library(sf)
 library(dplyr)
 library(readr)
+library(janitor)
 
 # countries layer ----
 
@@ -29,6 +30,10 @@ request <- build_url(url)
 
 ## convert to sf object ----
 countries_sf <- st_read(request)
+
+## clean names ----
+countries_sf <- countries_sf |> 
+  janitor::clean_names()
 
 ## save object ----
 saveRDS(countries_sf, 'src/data/countries_sf.Rds')
