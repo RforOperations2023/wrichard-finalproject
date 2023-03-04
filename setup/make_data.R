@@ -82,7 +82,10 @@ ratings <- ratings |>
       origin = 'iso3c',
       destination = 'country.name',
       custom_match = c('FIDE' = 'FIDE')
-    )
+    ),
+    SRtng = ifelse(is.na(SRtng), 0, SRtng),
+    RRtng = ifelse(is.na(RRtng), 0, RRtng),
+    BRtng = ifelse(is.na(BRtng), 0, BRtng),
   )
 
 # save data

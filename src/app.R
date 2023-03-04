@@ -269,8 +269,7 @@ ui <- dashboardPage(
     # show Elo=0
     checkboxInput(
       inputId = 'keep_zeros',
-      label = 'Show registered players with no Elo score?',
-      value = TRUE
+      label = 'Show registered players with no Elo score?'
     ),
     
     # birth year range
