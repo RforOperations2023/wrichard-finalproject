@@ -4,7 +4,7 @@ library(sf)
 library(dplyr)
 library(countrycode)
 library(htmltools)
-library(glue)
+library(scales)
 
 # get data
 ratings <- readRDS('src/data/ratings.Rds')
@@ -22,36 +22,34 @@ fed_counts <- ratings |>
 map_data <- countries_sf |> 
   left_join(fed_counts, by = c('iso' = 'iso2c'))
 
-# # dummy selection data
-# test_country_data <- data.frame(
-#   countries = c('US', 'IN', 'RU'),
-#   selected = as.factor('selected')
-# )
-# 
-# # add dummy selection data
-# countries <- countries |> 
-#   left_join(
-#     test_country_data,
-#     by = c('ISO' = 'countries')
-#   )
-
 # create custom palette
-my_pal <- colorQuantile(
+my_pal <- colorBin(
   palette = 'Blues',
   domain = map_data$highest_rating,
-  n = 5,
+  bin = 5,
   na.color = 'grey'
 )
 
 # simple viz
 leaflet(map_data) |> 
-  # addProviderTiles(providers$CartoDB.Positron) |> 
   addPolygons(
     fillColor = ~my_pal(highest_rating),
     stroke = TRUE,
-    fillOpacity = 0.7,
+    fillOpacity = 1,
     color = 'white',
     weight = 0.5,
-    label = 'test_label'
+    label = ~htmlEscape(country),
+    popup = ~paste0('<b>', country, '</b><br>',
+                    'highest rating: ', highest_rating, '<br>',
+                    'players: ', label_comma()(players)),
+    highlightOptions = highlightOptions(
+      weight = 5,
+      color = 'green',
+      opacity = 1,
+      bringToFront = TRUE)
   ) |>
+  addLegend('bottomright', pal = my_pal, values = ~highest_rating,
+            title = 'Highest Elo',
+            opacity = 1
+  ) |> 
   setView(lat= 20, lng = 10 , zoom = 1.5)
