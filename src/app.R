@@ -80,6 +80,14 @@ get_top_countries <- function(data, input) {
   return(top_tbl)
 }
 
+make_country_datatable <- function(top_tbl) {
+  dt <- top_tbl |> 
+    DT::datatable(
+      options = list(lengthChange = FALSE)
+    ) |> 
+    formatRound('players', digits = 0)
+}
+
 # viz ----
 
 ## labels ----
@@ -500,7 +508,7 @@ server <- function(input, output) {
   )
   
   output$dt_countries <- renderDataTable(
-    make_top_datatable(
+    make_country_datatable(
       get_top_countries(
         data$fed_summary(),
         input
@@ -545,7 +553,7 @@ server <- function(input, output) {
       nrow()
     
     valueBox(
-      n_dist, 
+      label_comma()(n_dist), 
       'Total Players Shown', 
       icon = icon('user', lib = 'glyphicon')
     )
@@ -559,3 +567,11 @@ server <- function(input, output) {
 }
 
 shinyApp(ui, server)
+
+
+# 
+# ratings |> 
+#   arrange(desc(SRtng)) |> 
+#   head(10) |> 
+#   datatable() |> 
+#   formatRound(columns = c('SRtng', 'RRtng', 'BRtng'), digits = 0)
