@@ -556,29 +556,36 @@ server <- function(input, output) {
   output$map <- renderLeaflet({
     leaflet(data$map_data()) |> 
       addTiles() |> 
+      setView(lat= 20, lng = 10 , zoom = 1.5)
+  })
+  
+  # update polygons
+  observe({
+    df <- data$map_data()
+    pal <- data$pal()
+
+    leafletProxy('map', data = df) |> 
+      clearShapes() |> 
       addPolygons(
-        fillColor = 'blue',
+        fillColor = ~pal(df[[input$time]]),
         stroke = TRUE,
         fillOpacity = 1,
         color = 'white',
         weight = 0.5,
         label = ~htmlEscape(country),
         popup = ~paste0('<b>', country, '</b><br>',
-                        'highest rating: ', SRtng, '<br>',
-                        'players: ', label_comma()(players)),
+                        'Top 10 Standard: ', SRtng, '<br>',
+                        'Top 10 Rapid: ', RRtng, '<br>',
+                        'Top 10 Bullet: ', BRtng, '<br>',
+                        'Players: ', label_comma()(players)),
         highlightOptions = highlightOptions(
           weight = 5,
           color = 'green',
           opacity = 1,
           bringToFront = TRUE)
-      ) |>
-      # addLegend('bottomright', pal = my_pal, values = ~highest_rating,
-      #           title = 'Highest Elo',
-      #           opacity = 1
-      # ) |> 
-      setView(lat= 20, lng = 10 , zoom = 1.5)
-    
+      ) 
   })
+  
 }
 
 shinyApp(ui, server)
