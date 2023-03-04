@@ -83,9 +83,9 @@ ratings <- ratings |>
       destination = 'country.name',
       custom_match = c('FIDE' = 'FIDE')
     ),
-    SRtng = ifelse(is.na(SRtng), 0, SRtng),
-    RRtng = ifelse(is.na(RRtng), 0, RRtng),
-    BRtng = ifelse(is.na(BRtng), 0, BRtng),
+    SRtng = ifelse(SRtng == 0, NA, SRtng),
+    RRtng = ifelse(RRtng == 0, NA, RRtng),
+    BRtng = ifelse(BRtng == 0, NA, BRtng),
   )
 
 # save data
