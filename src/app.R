@@ -36,22 +36,10 @@ make_country_subset <- function(data, input) {
   return(data)
 }
 
-make_ratings_score_subset <- function(data, input) {
-  if (input$keep_zeros == FALSE) {
-    data <- data |> 
-      filter(
-        SRtng > 0
-      )
-  }
-  
-  return(data)
-}
-
 make_data_subset <- function(data, input) {
   data <- data |> 
     make_ratings_year_subset(input = input) |>
-    make_country_subset(input = input) |> 
-    make_ratings_score_subset(input = input)
+    make_country_subset(input = input) 
   
   return(data)
 }
@@ -260,7 +248,12 @@ make_fed_summary <- function(data) {
 
 ## map palette ----
 make_pal <- function(data, input) {
-  
+  pal <- colorBin(
+    palette = 'Blues',
+    domain = data[[input$time]],
+    bin = 5,
+    na.color = 'grey'
+  )
 }
 
 # ui ----
@@ -314,12 +307,6 @@ ui <- dashboardPage(
       )
     ),
     
-    # show Elo=0
-    checkboxInput(
-      inputId = 'keep_zeros',
-      label = 'Show registered players with no Elo score?'
-    ),
-    
     # birth year range
     sliderInput(
       inputId = 'Byear_range',
@@ -338,11 +325,12 @@ ui <- dashboardPage(
       tabItem(
         tabName = 'tab_map',
         box(
-          leafletOutput('map'),
-          width = 9
+          # fill
+          width = 3
         ),
         box(
-          width = 3
+          leafletOutput('map'),
+          width = 9
         )
       ),
       
@@ -472,13 +460,18 @@ server <- function(input, output) {
     )
   )
   
-  # spatial join ----
+  ## spatial join ----
   data$map_data <- reactive({
     map_data <- data$countries_sf |> 
-        left_join(data$fed_summary, by = c('iso' = 'iso2c'))
+        left_join(data$fed_summary(), by = c('iso' = 'ISO'))
     
     return(map_data)
   })
+  
+  ## spatial palette ----
+  data$pal <- reactive(
+    make_pal(data = data, input = input)
+  )
   
   ## plots ----
   # distribution
@@ -561,17 +554,31 @@ server <- function(input, output) {
   
   ## map ----
   output$map <- renderLeaflet({
-    leaflet() |> 
-      addTiles()
+    leaflet(data$map_data()) |> 
+      addTiles() |> 
+      addPolygons(
+        fillColor = 'blue',
+        stroke = TRUE,
+        fillOpacity = 1,
+        color = 'white',
+        weight = 0.5,
+        label = ~htmlEscape(country),
+        popup = ~paste0('<b>', country, '</b><br>',
+                        'highest rating: ', SRtng, '<br>',
+                        'players: ', label_comma()(players)),
+        highlightOptions = highlightOptions(
+          weight = 5,
+          color = 'green',
+          opacity = 1,
+          bringToFront = TRUE)
+      ) |>
+      # addLegend('bottomright', pal = my_pal, values = ~highest_rating,
+      #           title = 'Highest Elo',
+      #           opacity = 1
+      # ) |> 
+      setView(lat= 20, lng = 10 , zoom = 1.5)
+    
   })
 }
 
 shinyApp(ui, server)
-
-
-# 
-# ratings |> 
-#   arrange(desc(SRtng)) |> 
-#   head(10) |> 
-#   datatable() |> 
-#   formatRound(columns = c('SRtng', 'RRtng', 'BRtng'), digits = 0)
