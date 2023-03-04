@@ -263,7 +263,7 @@ ui <- dashboardPage(
   
   ## header ----
   dashboardHeader(
-    title = 'test title re: ELO'
+    title = 'Final Project'
   ),
   
   ## sidebar ----
@@ -330,6 +330,8 @@ ui <- dashboardPage(
           h3(paste('This map visualizes the average Elo score of the top',
                    'ten players in each country according to your',
                   'selection of time control.')),
+          h3(paste('Feel free to click on countries or',
+                   'drag and scroll through the map')),
           width = 3
         ),
         box(
@@ -437,7 +439,7 @@ ui <- dashboardPage(
         h2('Top Players'),
         h4(paste('This table contains the highest rated players, ',
                  'filtered by your input and arranged by your ',
-                 'time control selection')),
+                 'time control selection.')),
         DT::dataTableOutput(outputId = 'dt_players')
       )
     )
