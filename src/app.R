@@ -10,6 +10,8 @@ library(scales)
 library(plotly)
 library(DT)
 
+federations <- readRDS('data/federations.Rds')
+
 # functions ----
 
 make_ratings_year_subset <- function(data, input) {
@@ -325,10 +327,13 @@ ui <- dashboardPage(
       tabItem(
         tabName = 'tab_map',
         box(
-          # fill
+          h3(paste('This map visualizes the average Elo score of the top',
+                   'ten players in each country according to your',
+                  'selection of time control.')),
           width = 3
         ),
         box(
+          title = 'World Map',
           leafletOutput('map'),
           width = 9
         )
@@ -373,7 +378,7 @@ ui <- dashboardPage(
             selectizeInput(
               inputId = 'fed_selected',
               label = 'Select Federations (max 7)',
-              choices = readRDS('data/federations.Rds'),
+              choices = federations,
               selected = c('USA', 'RUS', 'IND'),
               multiple = TRUE,
               options = list(maxItems = 7)
@@ -583,9 +588,8 @@ server <- function(input, output) {
           color = 'green',
           opacity = 1,
           bringToFront = TRUE)
-      ) 
+      )
   })
-  
 }
 
-shinyApp(ui, server)
+shinyApp(ui = ui, server = server)
