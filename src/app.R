@@ -28,10 +28,22 @@ make_country_subset <- function(data, input) {
   return(data)
 }
 
+make_ratings_score_subset <- function(data, input) {
+  if (input$keep_zeros == FALSE) {
+    data <- data |> 
+      filter(
+        SRtng > 0
+      )
+  }
+  
+  return(data)
+}
+
 make_data_subset <- function(data, input) {
   data <- data |> 
     make_ratings_year_subset(input = input) |>
-    make_country_subset(input = input)
+    make_country_subset(input = input) |> 
+    make_ratings_score_subset(input = input)
   
   return(data)
 }
@@ -254,6 +266,13 @@ ui <- dashboardPage(
       )
     ),
     
+    # show Elo=0
+    checkboxInput(
+      inputId = 'keep_zeros',
+      label = 'Show registered players with no Elo score?',
+      value = TRUE
+    ),
+    
     # birth year range
     sliderInput(
       inputId = 'Byear_range',
@@ -371,7 +390,6 @@ ui <- dashboardPage(
     )
   )
 )
-  
 
 # server ----
 server <- function(input, output) {
