@@ -1,6 +1,14 @@
 library(shiny)
+library(shinydashboard)
 library(shinythemes)
 library(leaflet)
+library(sf)
+library(dplyr)
+library(countrycode)
+library(htmltools)
+library(scales)
+library(plotly)
+library(DT)
 
 # functions ----
 
@@ -63,6 +71,13 @@ make_top_datatable <- function(top_tbl) {
     )
   
   return(dt)
+}
+
+get_top_countries <- function(data, input) {
+  top_tbl <- data |> 
+    arrange(desc(!!sym(input$time)))
+  
+  return(top_tbl)
 }
 
 # viz ----
@@ -220,6 +235,26 @@ make_scatter_plot <- function(data, input) {
   return(plt)
 }
 
+## map data ----
+make_fed_summary <- function(data) {
+  data <- data |> 
+    group_by(Country, iso2c) |> 
+    summarize(
+      players = n(),
+      SRtng = mean(tail(sort(SRtng), 10)),
+      RRtng = mean(tail(sort(RRtng), 10)),
+      BRtng = mean(tail(sort(BRtng), 10))
+    ) |> 
+    rename(ISO = iso2c)
+  
+  return(data)
+}
+
+## map palette ----
+make_pal <- function(data, input) {
+  
+}
+
 # ui ----
 ui <- dashboardPage(
   
@@ -236,6 +271,11 @@ ui <- dashboardPage(
         'Country Map', 
         tabName = 'tab_map', 
         icon = icon('globe', lib = 'glyphicon')
+      ),
+      menuItem(
+        'Top Countries',
+        tabName = 'tab_countries',
+        icon = icon('queen', lib = 'glyphicon')
       ),
       menuItem(
         'Elo Distributions', 
@@ -286,12 +326,25 @@ ui <- dashboardPage(
   dashboardBody(
     tabItems(
       
+      ### 1. Map ----
       tabItem(
         tabName = 'tab_map',
-        leafletOutput('map')
+        box(
+          leafletOutput('map'),
+          width = 9
+        ),
+        box(
+          width = 3
+        )
       ),
       
-      ### 1. Elo Dashboard ----
+      ### 2. Top Countries ----
+      tabItem(
+        tabName = 'tab_countries',
+        DT::dataTableOutput(outputId ='dt_countries')
+      ),
+    
+      ### 3. Elo Dashboard ----
       tabItem(
         tabName = 'tab_dist',
         box(
@@ -344,7 +397,7 @@ ui <- dashboardPage(
         )
       ),
       
-      ### 2. Scatter Plot ----
+      ### 4. Scatter Plot ----
       tabItem(
         tabName = 'tab_scatter',
         
@@ -377,14 +430,14 @@ ui <- dashboardPage(
         valueBoxOutput('v_fed_highlight')
       ),
       
-      ### 3. Top Players ----
+      ### 5. Top Players ----
       tabItem(
         tabName = 'tab_players',
         h2('Top Players'),
         h4(paste('This table contains the highest rated players, ',
                  'filtered by your input and arranged by your ',
                  'time control selection')),
-        dataTableOutput(outputId = 'dt')
+        DT::dataTableOutput(outputId = 'dt_players')
       )
     )
   )
@@ -405,6 +458,20 @@ server <- function(input, output) {
     )
   )
   
+  data$fed_summary <- reactive(
+    make_fed_summary(
+      data = data$dist_ratings_subset()
+    )
+  )
+  
+  # spatial join ----
+  data$map_data <- reactive({
+    map_data <- data$countries_sf |> 
+        left_join(data$fed_summary, by = c('iso' = 'iso2c'))
+    
+    return(map_data)
+  })
+  
   ## plots ----
   # distribution
   output$distribution_plot <- renderPlotly({
@@ -423,10 +490,19 @@ server <- function(input, output) {
   })
   
   ## datatables ----
-  output$dt <- renderDataTable(
+  output$dt_players <- renderDataTable(
     make_top_datatable(
       get_top_players(
         data$dist_ratings_subset(),
+        input
+      )
+    )
+  )
+  
+  output$dt_countries <- renderDataTable(
+    make_top_datatable(
+      get_top_countries(
+        data$fed_summary(),
         input
       )
     )
